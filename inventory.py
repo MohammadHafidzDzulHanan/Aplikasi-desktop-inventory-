@@ -1,250 +1,258 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import sqlite3
+from PIL import Image, ImageTk
 
-# ================= DARK MODE COLORS =================
+# ===================== DARK MODE COLORS =====================
 BG_DARK = "#1e1e1e"
 BG_FRAME = "#252526"
 BG_ENTRY = "#2d2d2d"
 FG_TEXT = "#ffffff"
 BTN_PRIMARY = "#0e639c"
 BTN_DANGER = "#c62828"
+BTN_SECONDARY = "#3a3d41"
+BTN_WARNING = "#f9a825"
 SELECT_COLOR = "#094771"
 
-# ================= DATABASE =================
-class Database:
-    def __init__(self):
-        self.conn = sqlite3.connect("inventory.db")
-        self.cursor = self.conn.cursor()
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS barang (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nama TEXT,
-                stok INTEGER,
-                harga INTEGER
-            )
-        """)
-        self.conn.commit()
+# ===================== HARGA =====================
+def format_rupiah(value):
+    try:
+        return f"Rp {int(value):,}".replace(",", ".")
+    except:
+        return "Rp 0"
 
-    def get_all(self):
-        self.cursor.execute("SELECT * FROM barang")
-        return self.cursor.fetchall()
+# ===================== BASE PAGE =====================
+class BasePage(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master, bg=BG_DARK)
+        self.pack(fill="both", expand=True)
 
-    def insert(self, nama, stok, harga):
-        self.cursor.execute(
-            "INSERT INTO barang (nama, stok, harga) VALUES (?, ?, ?)",
-            (nama, stok, harga)
-        )
-        self.conn.commit()
+        # TOP BAR
+        self.topbar = tk.Frame(self, bg="#181818", height=60)
+        self.topbar.pack(fill="x")
 
-    def update(self, id_, nama, stok, harga):
-        self.cursor.execute(
-            "UPDATE barang SET nama=?, stok=?, harga=? WHERE id=?",
-            (nama, stok, harga, id_)
-        )
-        self.conn.commit()
+        # LOGO
+        img = Image.open("ikile.png").resize((130, 70))
+        self.logo_img = ImageTk.PhotoImage(img)
+        tk.Label(self.topbar, image=self.logo_img, bg="#181818").pack(side="left", padx=15)
 
-    def delete(self, id_):
-        self.cursor.execute("DELETE FROM barang WHERE id=?", (id_,))
-        self.conn.commit()
+# ===================== LOGIN PAGE =====================
+class LoginPage(BasePage):
+    def __init__(self, master, on_success):
+        super().__init__(master)
+        self.on_success = on_success
 
-    def search(self, keyword):
-        self.cursor.execute(
-            "SELECT * FROM barang WHERE nama LIKE ?",
-            (f"%{keyword}%",)
-        )
-        return self.cursor.fetchall()
+        box = tk.Frame(self, bg=BG_FRAME, padx=30, pady=30)
+        box.place(relx=0.5, rely=0.5, anchor="center")
 
+        tk.Label(box, text="LOGIN ADMIN", bg=BG_FRAME, fg=FG_TEXT,
+                 font=("Segoe UI", 18, "bold")).pack(pady=15)
 
-# ================= APP =================
-class InventoryApp:
-    def __init__(self, root):
-        self.db = Database()
-        self.selected_id = None
-        self.root = root
+        self.username = tk.StringVar()
+        self.password = tk.StringVar()
+        self.show_pw = tk.BooleanVar()
 
-        root.title("Inventory Barang")
-        root.geometry("900x500")
-        root.configure(bg=BG_DARK)
+        def entry(label, var, show=None):
+            tk.Label(box, text=label, bg=BG_FRAME, fg=FG_TEXT).pack(anchor="w")
+            e = tk.Entry(box, textvariable=var, show=show,
+                         bg=BG_ENTRY, fg=FG_TEXT,
+                         insertbackground=FG_TEXT, width=30)
+            e.pack(pady=5)
+            return e
 
-        self.set_style()
-        self.build_ui()
-        self.load_data()
+        entry("Username", self.username)
+        self.pw_entry = entry("Password", self.password, "*")
 
-    def set_style(self):
-        style = ttk.Style()
-        style.theme_use("default")
+        tk.Checkbutton(
+            box, text="Lihat Password",
+            variable=self.show_pw,
+            command=lambda: self.pw_entry.config(show="" if self.show_pw.get() else "*"),
+            bg=BG_FRAME, fg=FG_TEXT,
+            selectcolor=BG_FRAME
+        ).pack(anchor="w", pady=5)
 
-        style.configure(
-            "Treeview",
-            background=BG_ENTRY,
-            foreground=FG_TEXT,
-            rowheight=26,
-            fieldbackground=BG_ENTRY
-        )
-        style.configure(
-            "Treeview.Heading",
-            background=BG_FRAME,
-            foreground=FG_TEXT
-        )
-        style.map(
-            "Treeview",
-            background=[("selected", SELECT_COLOR)],
-            foreground=[("selected", FG_TEXT)]
-        )
+        tk.Button(box, text="Login",
+                  bg=BTN_PRIMARY, fg="white",
+                  relief="flat", width=30,
+                  command=self.login).pack(pady=15)
 
-    def build_ui(self):
-        # ===== FRAME KIRI =====
-        frame_left = tk.LabelFrame(
-            self.root, text="Form Barang",
-            bg=BG_FRAME, fg=FG_TEXT, padx=10, pady=10
-        )
-        frame_left.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+    def login(self):
+        if self.username.get() == "apis" and self.password.get() == "apiskerensigmaskibidi":
+            self.on_success()
+        else:
+            messagebox.showerror("Error", "Username atau password salah")
 
-        tk.Label(frame_left, text="Nama Barang", bg=BG_FRAME, fg=FG_TEXT).pack(anchor="w")
-        self.nama = tk.Entry(frame_left, bg=BG_ENTRY, fg=FG_TEXT, insertbackground=FG_TEXT)
-        self.nama.pack(fill=tk.X, pady=5)
+# ===================== WELCOME PAGE =====================
+class WelcomePage(BasePage):
+    def __init__(self, master, open_category, logout):
+        super().__init__(master)
 
-        tk.Label(frame_left, text="Stok", bg=BG_FRAME, fg=FG_TEXT).pack(anchor="w")
-        self.stok = tk.Entry(frame_left, bg=BG_ENTRY, fg=FG_TEXT, insertbackground=FG_TEXT)
-        self.stok.pack(fill=tk.X, pady=5)
+        center = tk.Frame(self, bg=BG_DARK)
+        center.place(relx=0.5, rely=0.5, anchor="center")
 
-        tk.Label(frame_left, text="Harga", bg=BG_FRAME, fg=FG_TEXT).pack(anchor="w")
-        self.harga = tk.Entry(frame_left, bg=BG_ENTRY, fg=FG_TEXT, insertbackground=FG_TEXT)
-        self.harga.pack(fill=tk.X, pady=5)
+        tk.Label(center, text="Selamat Datang di IKILE Inventory",
+                 bg=BG_DARK, fg=FG_TEXT,
+                 font=("Segoe UI", 20, "bold")).pack(pady=20)
 
-        tk.Button(
-            frame_left, text="Tambah", bg=BTN_PRIMARY, fg="white",
-            relief="flat", command=self.add
-        ).pack(fill=tk.X, pady=5)
+        for cat in ["Elektronik", "Furniture", "Peralatan"]:
+            tk.Button(
+                center, text=cat,
+                bg=BTN_SECONDARY, fg="white",
+                width=30, pady=10,
+                relief="flat",
+                command=lambda c=cat: open_category(c)
+            ).pack(pady=5)
 
-        tk.Button(
-            frame_left, text="Update", bg=BTN_PRIMARY, fg="white",
-            relief="flat", command=self.update
-        ).pack(fill=tk.X, pady=5)
+        tk.Button(center, text="Logout",
+                  bg=BTN_DANGER, fg="white",
+                  width=20, relief="flat",
+                  command=logout).pack(pady=20)
 
-        tk.Button(
-            frame_left, text="Reset", bg="#444", fg="white",
-            relief="flat", command=self.reset
-        ).pack(fill=tk.X, pady=5)
+# ===================== INVENTORY PAGE =====================
+class InventoryPage(BasePage):
+    def __init__(self, master, category, go_back):
+        super().__init__(master)
+        self.category = category
+        self.go_back = go_back
+        self.data = []
+        self.selected_index = None
 
-        # ===== FRAME KANAN =====
-        frame_right = tk.Frame(self.root, bg=BG_DARK)
-        frame_right.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+        # HEADER
+        header = tk.Frame(self, bg=BG_DARK)
+        header.pack(fill="x", pady=10)
 
-        # SEARCH
-        frame_search = tk.Frame(frame_right, bg=BG_DARK)
-        frame_search.pack(fill=tk.X, pady=5)
+        tk.Label(header, text=f"Inventory - {category}",
+                 bg=BG_DARK, fg=FG_TEXT,
+                 font=("Segoe UI", 16, "bold")).pack(side="left", padx=20)
 
-        tk.Label(frame_search, text="Cari Barang:", bg=BG_DARK, fg=FG_TEXT).pack(side=tk.LEFT)
-        self.search_entry = tk.Entry(
-            frame_search, bg=BG_ENTRY, fg=FG_TEXT, insertbackground=FG_TEXT
-        )
-        self.search_entry.pack(side=tk.LEFT, padx=5)
+        tk.Button(header, text="← Kembali",
+                  bg=BTN_SECONDARY, fg="white",
+                  relief="flat",
+                  command=self.go_back).pack(side="right", padx=20)
 
-        tk.Button(
-            frame_search, text="Cari", bg=BTN_PRIMARY, fg="white",
-            relief="flat", command=self.search
-        ).pack(side=tk.LEFT)
+        # FORM
+        form = tk.Frame(self, bg=BG_FRAME, padx=15, pady=15)
+        form.pack(fill="x", padx=20, pady=10)
 
-        tk.Button(
-            frame_search, text="Semua Data", bg="#555", fg="white",
-            relief="flat", command=self.load_data
-        ).pack(side=tk.LEFT, padx=5)
+        self.nama = tk.StringVar()
+        self.stok = tk.StringVar()
+        self.harga = tk.StringVar()
+
+        for i, (label, var) in enumerate([
+            ("Nama Barang", self.nama),
+            ("Stok", self.stok),
+            ("Harga", self.harga)
+        ]):
+            tk.Label(form, text=label, bg=BG_FRAME, fg=FG_TEXT).grid(row=0, column=i)
+            tk.Entry(form, textvariable=var,
+                     bg=BG_ENTRY, fg=FG_TEXT,
+                     insertbackground=FG_TEXT,
+                     width=25).grid(row=1, column=i, padx=5)
+
+        tk.Button(form, text="Tambah",
+                  bg=BTN_PRIMARY, fg="white",
+                  relief="flat",
+                  command=self.add).grid(row=1, column=3, padx=5)
+
+        tk.Button(form, text="Update",
+                  bg=BTN_WARNING, fg="black",
+                  relief="flat",
+                  command=self.update).grid(row=1, column=4, padx=5)
 
         # TABLE
-        columns = ("id", "nama", "stok", "harga")
-        self.table = ttk.Treeview(frame_right, columns=columns, show="headings")
+        style = ttk.Style()
+        style.theme_use("default")
+        style.configure("Treeview", background=BG_ENTRY,
+                        foreground=FG_TEXT, rowheight=28,
+                        fieldbackground=BG_ENTRY)
+        style.configure("Treeview.Heading",
+                        background=BG_FRAME, foreground=FG_TEXT)
+        style.map("Treeview", background=[("selected", SELECT_COLOR)])
 
-        self.table.heading("id", text="ID")
-        self.table.heading("nama", text="Nama Barang")
-        self.table.heading("stok", text="Stok")
-        self.table.heading("harga", text="Harga")
+        self.table = ttk.Treeview(self, columns=("Nama", "Stok", "Harga"), show="headings")
+        for col in ("Nama", "Stok", "Harga"):
+            self.table.heading(col, text=col)
+            self.table.column(col, anchor="center")
 
-        self.table.column("id", width=50, anchor="center")
-        self.table.column("nama", width=260)
-        self.table.column("stok", width=80, anchor="center")
-        self.table.column("harga", width=140, anchor="e")
+        self.table.pack(fill="both", expand=True, padx=20, pady=10)
+        self.table.bind("<<TreeviewSelect>>", self.select)
 
-        self.table.pack(fill=tk.BOTH, expand=True, pady=10)
-        self.table.bind("<<TreeviewSelect>>", self.select_row)
+        tk.Button(self, text="Hapus Data Terpilih",
+                  bg=BTN_DANGER, fg="white",
+                  relief="flat",
+                  command=self.delete).pack(pady=10)
 
-        tk.Button(
-            frame_right, text="Hapus Data Terpilih",
-            bg=BTN_DANGER, fg="white", relief="flat",
-            command=self.delete
-        ).pack(anchor="e")
-
-    # ================= LOGIC =================
-    def format_rp(self, n):
-        return f"Rp {n:,}".replace(",", ".")
-
-    def load_data(self):
+    def refresh(self):
         self.table.delete(*self.table.get_children())
-        for b in self.db.get_all():
-            self.table.insert("", "end", values=(
-                b[0], b[1], b[2], self.format_rp(b[3])
-            ))
+        for item in self.data:
+            self.table.insert("", "end", values=item)
 
     def add(self):
-        if not self.nama.get() or not self.stok.get().isdigit() or not self.harga.get().isdigit():
-            messagebox.showwarning("Error", "Input tidak valid")
+        self.data.append((self.nama.get(), self.stok.get(), format_rupiah(self.harga.get())))
+        self.refresh()
+        self.clear()
+
+    def select(self, _):
+        selected = self.table.selection()
+        if not selected:
             return
-        self.db.insert(self.nama.get(), int(self.stok.get()), int(self.harga.get()))
-        self.load_data()
-        self.reset()
+        self.selected_index = self.table.index(selected[0])
+        nama, stok, harga = self.data[self.selected_index]
+        self.nama.set(nama)
+        self.stok.set(stok)
+        self.harga.set(harga.replace("Rp ", "").replace(".", ""))
 
     def update(self):
-        if not self.selected_id:
+        if self.selected_index is None:
             return
-        self.db.update(
-            self.selected_id,
+        self.data[self.selected_index] = (
             self.nama.get(),
-            int(self.stok.get()),
-            int(self.harga.get())
+            self.stok.get(),
+            format_rupiah(self.harga.get())
         )
-        self.load_data()
-        self.reset()
+        self.refresh()
+        self.clear()
 
     def delete(self):
-        if not self.selected_id:
+        if self.selected_index is None:
             return
-        self.db.delete(self.selected_id)
-        self.load_data()
-        self.reset()
+        self.data.pop(self.selected_index)
+        self.refresh()
+        self.clear()
 
-    def search(self):
-        self.table.delete(*self.table.get_children())
-        for b in self.db.search(self.search_entry.get()):
-            self.table.insert("", "end", values=(
-                b[0], b[1], b[2], self.format_rp(b[3])
-            ))
+    def clear(self):
+        self.nama.set("")
+        self.stok.set("")
+        self.harga.set("")
+        self.selected_index = None
 
-    def select_row(self, event):
-        item = self.table.item(self.table.selection())
-        if not item["values"]:
-            return
+# ===================== APP ROOT =====================
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("IKILE Inventory System")
+        self.configure(bg=BG_DARK)
 
-        self.selected_id = item["values"][0]
-        self.nama.delete(0, tk.END)
-        self.nama.insert(0, item["values"][1])
+        # FULLSCREEN
+        self.state("zoomed")
 
-        self.stok.delete(0, tk.END)
-        self.stok.insert(0, item["values"][2])
+        self.current = None
+        self.show_login()
 
-        harga = item["values"][3].replace("Rp ", "").replace(".", "")
-        self.harga.delete(0, tk.END)
-        self.harga.insert(0, harga)
+    def clear(self):
+        if self.current:
+            self.current.destroy()
 
-    def reset(self):
-        self.selected_id = None
-        self.nama.delete(0, tk.END)
-        self.stok.delete(0, tk.END)
-        self.harga.delete(0, tk.END)
+    def show_login(self):
+        self.clear()
+        self.current = LoginPage(self, self.show_welcome)
 
+    def show_welcome(self):
+        self.clear()
+        self.current = WelcomePage(self, self.show_inventory, self.show_login)
 
-# ================= RUN =================
+    def show_inventory(self, category):
+        self.clear()
+        self.current = InventoryPage(self, category, self.show_welcome)
+
 if __name__ == "__main__":
-    root = tk.Tk()
-    InventoryApp(root)
-    root.mainloop()
+    App().mainloop()
