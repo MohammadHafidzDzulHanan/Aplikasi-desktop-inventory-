@@ -27,13 +27,13 @@ class BasePage(tk.Frame):
         self.pack(fill="both", expand=True)
 
         # TOP BAR
-        self.topbar = tk.Frame(self, bg="#181818", height=60)
-        self.topbar.pack(fill="x")
+        # self.topbar = tk.Frame(self, bg="#181818", height=60)
+        # self.topbar.pack(fill="x")
 
         # LOGO
-        img = Image.open("ikile.png").resize((130, 70))
+        img = Image.open("ikile.png").resize((200, 120))
         self.logo_img = ImageTk.PhotoImage(img)
-        tk.Label(self.topbar, image=self.logo_img, bg="#181818").pack(side="left", padx=15)
+        tk.Label(self, image=self.logo_img, bg=BG_DARK).pack(anchor="nw", padx=10, pady=10)
 
 # ===================== LOGIN PAGE =====================
 class LoginPage(BasePage):
