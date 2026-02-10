@@ -33,7 +33,7 @@ class BasePage(tk.Frame):
         # LOGO
         img = Image.open("ikile.png").resize((200, 120))
         self.logo_img = ImageTk.PhotoImage(img)
-        tk.Label(self, image=self.logo_img, bg=BG_DARK).pack(anchor="nw", padx=10, pady=10)
+        tk.Label(self, image=self.logo_img, bg=BG_DARK).pack(anchor="nw", padx=10, pady=5)
 
 # ===================== LOGIN PAGE =====================
 class LoginPage(BasePage):
