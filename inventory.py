@@ -1,4 +1,5 @@
 import tkinter as tk
+import sqlite3
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 
@@ -19,6 +20,29 @@ def format_rupiah(value):
         return f"Rp {int(value):,}".replace(",", ".")
     except:
         return "Rp 0"
+    
+
+# ===================== database =====================
+def get_db():
+    return sqlite3.connect("inventory.db")
+
+
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama TEXT,
+        stok INTEGER,
+        harga TEXT,
+        kategori TEXT
+    )
+    """)
+    conn.commit()
+    conn.close()
+    print("Database initialized.")
+
 
 # ===================== BASE PAGE =====================
 class BasePage(tk.Frame):
@@ -103,9 +127,9 @@ class WelcomePage(BasePage):
             ).pack(pady=5)
 
         tk.Button(center, text="Logout",
-                  bg=BTN_DANGER, fg="white",
-                  width=20, relief="flat",
-                  command=logout).pack(pady=20)
+                bg=BTN_DANGER, fg="white",
+                width=20, relief="flat",
+                command=logout).pack(pady=20)
 
 # ===================== INVENTORY PAGE =====================
 class InventoryPage(BasePage):
@@ -113,21 +137,23 @@ class InventoryPage(BasePage):
         super().__init__(master)
         self.category = category
         self.go_back = go_back
-        self.data = []
-        self.selected_index = None
+        # self.data = []
+        # self.selected_index = None
+        self.setup_ui()
+        self.load_data()
 
         # HEADER
         header = tk.Frame(self, bg=BG_DARK)
         header.pack(fill="x", pady=10)
 
         tk.Label(header, text=f"Inventory - {category}",
-                 bg=BG_DARK, fg=FG_TEXT,
-                 font=("Segoe UI", 16, "bold")).pack(side="left", padx=20)
+                bg=BG_DARK, fg=FG_TEXT,
+                font=("Segoe UI", 16, "bold")).pack(side="left", padx=20)
 
         tk.Button(header, text="← Kembali",
-                  bg=BTN_SECONDARY, fg="white",
-                  relief="flat",
-                  command=self.go_back).pack(side="right", padx=20)
+                bg=BTN_SECONDARY, fg="white",
+                relief="flat",
+                command=self.go_back).pack(side="right", padx=20)
 
         # FORM
         form = tk.Frame(self, bg=BG_FRAME, padx=15, pady=15)
@@ -144,19 +170,19 @@ class InventoryPage(BasePage):
         ]):
             tk.Label(form, text=label, bg=BG_FRAME, fg=FG_TEXT).grid(row=0, column=i)
             tk.Entry(form, textvariable=var,
-                     bg=BG_ENTRY, fg=FG_TEXT,
-                     insertbackground=FG_TEXT,
-                     width=25).grid(row=1, column=i, padx=5)
+                    bg=BG_ENTRY, fg=FG_TEXT,
+                    insertbackground=FG_TEXT,
+                    width=25).grid(row=1, column=i, padx=5)
 
         tk.Button(form, text="Tambah",
-                  bg=BTN_PRIMARY, fg="white",
-                  relief="flat",
-                  command=self.add).grid(row=1, column=3, padx=5)
+                bg=BTN_PRIMARY, fg="white",
+                relief="flat",
+                command=self.add).grid(row=1, column=3, padx=5)
 
         tk.Button(form, text="Update",
-                  bg=BTN_WARNING, fg="black",
-                  relief="flat",
-                  command=self.update).grid(row=1, column=4, padx=5)
+                bg=BTN_WARNING, fg="black",
+                relief="flat",
+                command=self.update).grid(row=1, column=4, padx=5)
 
         # TABLE
         style = ttk.Style()
@@ -177,9 +203,9 @@ class InventoryPage(BasePage):
         self.table.bind("<<TreeviewSelect>>", self.select)
 
         tk.Button(self, text="Hapus Data Terpilih",
-                  bg=BTN_DANGER, fg="white",
-                  relief="flat",
-                  command=self.delete).pack(pady=10)
+                bg=BTN_DANGER, fg="white",
+                relief="flat",
+                command=self.delete).pack(pady=10)
 
     def refresh(self):
         self.table.delete(*self.table.get_children())
@@ -187,9 +213,39 @@ class InventoryPage(BasePage):
             self.table.insert("", "end", values=item)
 
     def add(self):
-        self.data.append((self.nama.get(), self.stok.get(), format_rupiah(self.harga.get())))
-        self.refresh()
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute("""
+        INSERT INTO inventory (nama, stok, harga, kategori)
+        VALUES (?, ?, ?, ?)
+        """, (
+        self.nama.get(),
+        self.stok.get(),
+        format_rupiah(self.harga.get()),
+        self.category
+    ))
+
+        conn.commit()
+        conn.close()
+
+        self.load_data()
         self.clear()
+
+# ===================== LOAD DATA =====================
+    def load_data(self):
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute("""
+        SELECT nama, stok, harga FROM inventory
+        WHERE kategori = ?
+        """, (self.category,))
+
+        self.data = cur.fetchall()
+        conn.close()
+        self.refresh()
+
 
     def select(self, _):
         selected = self.table.selection()
@@ -229,6 +285,8 @@ class InventoryPage(BasePage):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+
+        init_db()
         self.title("IKILE Inventory System")
         self.configure(bg=BG_DARK)
 
