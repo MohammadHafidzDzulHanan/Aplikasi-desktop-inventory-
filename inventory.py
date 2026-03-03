@@ -59,7 +59,7 @@ class LoginPage(BasePage):
             e.pack(pady=5)
             return e
 
-        entry("Username", self.username)
+        entry("Username", self.username)``
         self.pw_entry = entry("Password", self.password, "*")
 
         tk.Checkbutton(
