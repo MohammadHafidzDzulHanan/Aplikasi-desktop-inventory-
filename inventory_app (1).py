@@ -189,20 +189,20 @@ class LoginPage(BasePage):
         # logo / title
         tk.Label(card, text="📦", font=("Segoe UI", 38), bg=COLORS["surface"], fg=COLORS["accent"]).pack()
         tk.Label(card, text="Inventory System", font=("Segoe UI", 20, "bold"),
-                 bg=COLORS["surface"], fg=COLORS["text"]).pack(pady=(4, 2))
+            bg=COLORS["surface"], fg=COLORS["text"]).pack(pady=(4, 2))
         tk.Label(card, text="Masuk ke akun Anda", font=FONT_SMALL,
-                 bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(pady=(0, 28))
+            bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(pady=(0, 28))
 
         # username
         tk.Label(card, text="Username", font=("Segoe UI", 9, "bold"),
-                 bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(anchor="w")
+            bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(anchor="w")
         self.var_user = tk.StringVar()
         ue = make_entry(card, textvariable=self.var_user, width=30)
         ue.pack(ipady=7, fill="x", pady=(4, 16))
 
         # password
         tk.Label(card, text="Password", font=("Segoe UI", 9, "bold"),
-                 bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(anchor="w")
+            bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(anchor="w")
         self.var_pass = tk.StringVar()
         self.pass_entry = make_entry(card, textvariable=self.var_pass, show="●", width=30)
         self.pass_entry.pack(ipady=7, fill="x", pady=(4, 8))
@@ -225,7 +225,7 @@ class LoginPage(BasePage):
 
         # hint
         tk.Label(card, text="Demo: admin / admin123",
-                 font=FONT_SMALL, bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(pady=(16, 0))
+            font=FONT_SMALL, bg=COLORS["surface"], fg=COLORS["text_muted"]).pack(pady=(16, 0))
 
         ue.focus_set()
         self.bind_all("<Return>", lambda e: self._login())
@@ -266,7 +266,7 @@ class WelcomePage(BasePage):
         topbar = tk.Frame(self, bg=COLORS["surface"], pady=14)
         topbar.pack(fill="x")
         tk.Label(topbar, text="📦  Inventory System", font=("Segoe UI", 14, "bold"),
-                 bg=COLORS["surface"], fg=COLORS["text"]).pack(side="left", padx=24)
+            bg=COLORS["surface"], fg=COLORS["text"]).pack(side="left", padx=24)
         make_button(topbar, "⏻  Logout", self._logout,
                     color=COLORS["danger"], width=10).pack(side="right", padx=20)
 
@@ -275,11 +275,11 @@ class WelcomePage(BasePage):
         hero.pack(expand=True, fill="both")
 
         tk.Label(hero, text="Selamat Datang di", font=("Segoe UI", 16),
-                 bg=COLORS["bg"], fg=COLORS["text_muted"]).pack(pady=(60, 0))
+            bg=COLORS["bg"], fg=COLORS["text_muted"]).pack(pady=(60, 0))
         tk.Label(hero, text="Inventory System", font=("Segoe UI", 36, "bold"),
-                 bg=COLORS["bg"], fg=COLORS["text"]).pack()
+            bg=COLORS["bg"], fg=COLORS["text"]).pack()
         tk.Label(hero, text="Pilih kategori untuk mengelola data inventaris",
-                 font=("Segoe UI", 12), bg=COLORS["bg"], fg=COLORS["text_muted"]).pack(pady=(8, 48))
+            font=("Segoe UI", 12), bg=COLORS["bg"], fg=COLORS["text_muted"]).pack(pady=(8, 48))
 
         # category cards
         cards_frame = tk.Frame(hero, bg=COLORS["bg"])
@@ -290,7 +290,7 @@ class WelcomePage(BasePage):
 
     def _make_category_card(self, parent, cat):
         frame = tk.Frame(parent, bg=COLORS["surface"], padx=32, pady=32,
-                         relief="flat", bd=0)
+            relief="flat", bd=0)
         frame.pack(side="left", padx=16, pady=8)
 
         # colored top stripe
@@ -298,13 +298,13 @@ class WelcomePage(BasePage):
         stripe.pack(fill="x", pady=(0, 20))
 
         tk.Label(frame, text=cat["emoji"], font=("Segoe UI", 32),
-                 bg=COLORS["surface"]).pack()
+            bg=COLORS["surface"]).pack()
         tk.Label(frame, text=cat["label"], font=("Segoe UI", 14, "bold"),
-                 bg=COLORS["surface"], fg=COLORS["text"]).pack(pady=(8, 20))
+            bg=COLORS["surface"], fg=COLORS["text"]).pack(pady=(8, 20))
 
         btn = make_button(frame, f"Buka {cat['label']}",
-                          lambda c=cat["label"]: self._open_category(c),
-                          color=cat["color"], width=16)
+                lambda c=cat["label"]: self._open_category(c),
+                color=cat["color"], width=16)
         btn.pack()
 
         # hover effect on card
