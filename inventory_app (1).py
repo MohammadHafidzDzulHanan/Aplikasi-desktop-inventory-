@@ -520,10 +520,13 @@ class InventoryPage(BasePage):
 
         self.tree = ttk.Treeview(frame, columns=cols, show="headings",
                                   style="Dark.Treeview", selectmode="browse")
-        widths = {"ID": 50, "Nama Barang": 220, "Stok": 80, "Harga": 150}
+        widths = {"ID": 0, "Nama Barang": 220, "Stok": 80, "Harga": 150}
         for col in cols:
             self.tree.heading(col, text=col)
             self.tree.column(col, width=widths[col], anchor="center" if col != "Nama Barang" else "w")
+        # Sembunyikan kolom ID dari tampilan
+        self.tree.column("ID", width=0, minwidth=0, stretch=False)
+        self.tree.heading("ID", text="")
 
         vsb = ttk.Scrollbar(frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
@@ -651,7 +654,7 @@ class InventoryPage(BasePage):
         if not sel:
             return
         values = self.tree.item(sel[0], "values")
-        self.selected_id = int(values[0])
+        self.selected_id = int(values[0])  # ID tetap di values[0], hanya disembunyikan visual
         self.var_nama.set(values[1])
         self.var_stok.set(values[2])
         self.var_harga.set(values[3])
