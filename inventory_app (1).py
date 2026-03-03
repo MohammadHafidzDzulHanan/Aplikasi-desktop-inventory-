@@ -269,6 +269,7 @@ class WelcomePage(BasePage):
             bg=COLORS["surface"], fg=COLORS["text"]).pack(side="left", padx=24)
         make_button(topbar, "⏻  Logout", self._logout,
                     color=COLORS["danger"], width=10).pack(side="right", padx=20)
+        
 
         # hero
         hero = tk.Frame(self, bg=COLORS["bg"])
@@ -333,7 +334,9 @@ class WelcomePage(BasePage):
         self.controller.show_page("InventoryPage")
 
     def _logout(self):
-        self.controller.show_page("LoginPage")
+        if messagebox.askyesno("Konfirmasi Logout", "Apakah Anda yakin ingin keluar?"):
+            self.controller.show_page("LoginPage")
+            messagebox.showinfo("Logout Berhasil", "Anda telah berhasil keluar.")
 
 # ─────────────────────────────────────────────
 #  INVENTORY PAGE
@@ -614,6 +617,7 @@ class InventoryPage(BasePage):
             db_delete(self.selected_id)
             self._clear_form()
             self._refresh_table()
+            messagebox.showinfo("Sukses", "Data berhasil dihapus.")
 
     # ── HELPERS ──────────────────────────────
     def _get_form(self):
